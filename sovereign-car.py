@@ -1,7 +1,6 @@
 import RPi.GPIO as gpio
 import time
 import sys
-from sensor import distance
 import random
 from picamera.array import PiRGBArray
 #import RPi.GPIO as GPIO
@@ -16,18 +15,17 @@ def init():
     gpio.setup(11, gpio.OUT)
     gpio.setup(13, gpio.OUT)
     gpio.setup(15, gpio.OUT)
-
 def reset():
     gpio.cleanup()
     
 init()
 
-cmd = {'left':'0100','right':'0001','back':'1010','front':'0101','pivotleft':'0110','pivotright':'1001','stop':'0000'}
+cmd = {'right':'1011','left':'1110','front':'1010','back':'0101','pivotleft':'0110','pivotright':'1001','stop':'0000'}
 
 last_key = None
 def decode(key):
    global last_key
-   if last_key == key:
+   if last_key == key or key not in cmd:
           return
 
    print(key)
@@ -40,7 +38,7 @@ def decode(key):
       b = int(cmd[key][i]) != 0
       print(pins[i],'->',b)
       gpio.output(pins[i],b)
-        
+      
 
 theta=0
 minLineLength = 5
@@ -62,16 +60,17 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                cv2.line(image,(x1,y1),(x2,y2),(0,255,0),2)
                theta=theta+math.atan2((y2-y1),(x2-x1))
    #print(theta)GPIO pins were connected to arduino for servo steering control
-   threshold=6
+   threshold=10
+   print(theta)
    if(theta>threshold):
-       decode('left')
-      # print("left")
+      decode('pivotleft')
+      print("left")
    if(theta<-threshold):
-       decode('right')
-     #  print("right")
+      decode('pivotright')
+      print("right")
    if(abs(theta)<threshold):
       decode('front')
-    #  print ("straight")
+      print ("straight")
    theta=0
    cv2.imshow("Frame",image)
    key = cv2.waitKey(1) & 0xFF
@@ -79,3 +78,11 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
    if key == ord("q"):
        decode('stop')
        break
+   if key == ord('w'):
+       decode('front')
+   elif key == ord('a'):
+       decode('pivotleft')
+   elif key == ord('s'):
+       decode('pivotright')
+   elif key == ord('z'):
+       decode('back')
