@@ -38,7 +38,25 @@ def decode(key):
       b = int(cmd[key][i]) != 0
       print(pins[i],'->',b)
       gpio.output(pins[i],b)
-      
+
+p = 0.5
+def get_cropped(img):
+        
+    height, width = img.shape
+
+    h = height * (1 - p)
+    img = img[int(h):height, 0:width]
+
+    height, width = img.shape
+
+#    for y in range(0,width):
+ #       for x in range(0,height):  
+  #          if img[x,y] < 50:
+   #             img[x,y] = 0
+    #        else:
+     #           img[x,y] = 255
+
+    return img
 
 theta=0
 minLineLength = 5
@@ -51,6 +69,9 @@ time.sleep(0.1)
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
    image = frame.array
    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+   gray = get_cropped(gray)
+
    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
    edged = cv2.Canny(blurred, 85, 85)
    lines = cv2.HoughLinesP(edged,1,np.pi/180,10,minLineLength,maxLineGap)
@@ -60,7 +81,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                cv2.line(image,(x1,y1),(x2,y2),(0,255,0),2)
                theta=theta+math.atan2((y2-y1),(x2-x1))
    #print(theta)GPIO pins were connected to arduino for servo steering control
-   threshold=10
+   threshold=18
    print(theta)
    if(theta>threshold):
       decode('pivotleft')
@@ -72,7 +93,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
       decode('front')
       print ("straight")
    theta=0
-   cv2.imshow("Frame",image)
+   cv2.imshow("Frame",edged)
    key = cv2.waitKey(1) & 0xFF
    rawCapture.truncate(0)
    if key == ord("q"):
@@ -81,8 +102,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
    if key == ord('w'):
        decode('front')
    elif key == ord('a'):
-       decode('pivotleft')
+       decode('left')
    elif key == ord('s'):
-       decode('pivotright')
+       decode('right')
    elif key == ord('z'):
        decode('back')
