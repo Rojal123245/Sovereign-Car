@@ -50,6 +50,18 @@ def init():
 
     pwm1 = gpio.PWM(35,100)
     pwm1.start(0)
+    
+    gpio.output(38, False)
+    sleep(2)
+    
+    emitSound()
+    
+    
+def emitSound():
+    gpio.output(38, True)
+    sleep(0.00001)
+    gpio.output(38, False)    
+    
 
 def reset():
     #pwm0.stop()
@@ -114,6 +126,24 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 
         pwm0.ChangeDutyCycle(dutyCycle)
         pwm1.ChangeDutyCycle(dutyCycle)
+        
+     if gpio.input(40) == False:
+        pulse_start_time = time()
+     else:
+        pulse_duration = time() - pulse_start_time
+        distance = pulse_duration * 17150
+        distance = round(distance, 2)
+        
+        print('distance=',distance)
+        
+        halt = distance <= 15
+        if halt:
+            move('stop')
+        
+        emitSound()
+        
+        
+        
 
     
 
