@@ -12,7 +12,6 @@ speed_of_sound = 340
 dutyCycle = 100
 halt = False
 prev_echo = 0
-dutyCycle = 100
 minLineLength = 5
 maxLineGap = 10
 camera = PiCamera()
@@ -41,7 +40,6 @@ def init():
     gpio.setup(35,gpio.OUT)
 
     #ultrasonic
-    gpio.setup(38,gpio.OUT)
     gpio.setup(40,gpio.IN)
     
     global pwm0, pwm1
@@ -50,17 +48,6 @@ def init():
 
     pwm1 = gpio.PWM(35,100)
     pwm1.start(0)
-    
-    gpio.output(38, False)
-    sleep(2)
-    
-    emitSound()
-    
-    
-def emitSound():
-    gpio.output(38, True)
-    sleep(0.00001)
-    gpio.output(38, False)    
     
 
 def reset():
@@ -126,21 +113,17 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 
         pwm0.ChangeDutyCycle(dutyCycle)
         pwm1.ChangeDutyCycle(dutyCycle)
-        
-     if gpio.input(40) == False:
-        pulse_start_time = time()
+
+     arduino_out = gpio.input(40)
+
+     print(arduino_out)
+     
+     if arduino_out:
+         halt = True
+         move('stop')
      else:
-        pulse_duration = time() - pulse_start_time
-        distance = pulse_duration * 17150
-        distance = round(distance, 2)
+         halt = False
         
-        print('distance=',distance)
-        
-        halt = distance <= 15
-        if halt:
-            move('stop')
-        
-        emitSound()
         
         
         
